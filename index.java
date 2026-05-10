@@ -1,0 +1,414 @@
+/* ==============================================
+   CHAMODYA TRAVELS — JAVASCRIPT
+   Navigation toggle, smooth scroll, form validation,
+   scroll animations, and interactive features
+   ============================================== */
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ---- DOM Element References ----
+    const navbar = document.getElementById('navbar');
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    const backToTopBtn = document.getElementById('backToTop');
+    const contactForm = document.getElementById('contactForm');
+
+
+    // ============================================
+    // 1. MOBILE NAVIGATION TOGGLE
+    //    Hamburger menu open/close for mobile view
+    // ============================================
+
+    // Create overlay element for mobile menu
+    const overlay = document.createElement('div');
+    overlay.classList.add('nav-overlay');
+    document.body.appendChild(overlay);
+
+    // Toggle mobile menu
+    navToggle.addEventListener('click', function () {
+        navToggle.classList.toggle('active');
+        navLinks.classList.toggle('open');
+        overlay.classList.toggle('visible');
+        // Prevent body scroll when menu is open
+        document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
+    });
+
+    // Close mobile menu when clicking overlay
+    overlay.addEventListener('click', function () {
+        navToggle.classList.remove('active');
+        navLinks.classList.remove('open');
+        overlay.classList.remove('visible');
+        document.body.style.overflow = '';
+    });
+
+    // Close mobile menu when clicking a nav link
+    navLinks.querySelectorAll('.nav-link').forEach(function (link) {
+        link.addEventListener('click', function () {
+            navToggle.classList.remove('active');
+            navLinks.classList.remove('open');
+            overlay.classList.remove('visible');
+            document.body.style.overflow = '';
+        });
+    });
+
+
+    // ============================================
+    // 2. NAVBAR SCROLL EFFECT
+    //    Change navbar style on scroll
+    // ============================================
+
+    function handleNavbarScroll() {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    }
+
+    window.addEventListener('scroll', handleNavbarScroll);
+    // Run on load in case page is already scrolled
+    handleNavbarScroll();
+
+
+    // ============================================
+    // 3. ACTIVE NAV LINK ON SCROLL
+    //    Highlight the current section's nav link
+    // ============================================
+
+    const sections = document.querySelectorAll('section[id]');
+    const navLinkElements = document.querySelectorAll('.nav-link');
+
+    function highlightActiveNavLink() {
+        var scrollPos = window.scrollY + 120;
+
+        sections.forEach(function (section) {
+            var sectionTop = section.offsetTop;
+            var sectionHeight = section.offsetHeight;
+            var sectionId = section.getAttribute('id');
+
+            if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                navLinkElements.forEach(function (link) {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + sectionId) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    }
+
+    window.addEventListener('scroll', highlightActiveNavLink);
+
+
+    // ============================================
+    // 4. BACK TO TOP BUTTON
+    //    Show/hide based on scroll position
+    // ============================================
+
+    function handleBackToTop() {
+        if (window.scrollY > 500) {
+            backToTopBtn.classList.add('visible');
+        } else {
+            backToTopBtn.classList.remove('visible');
+        }
+    }
+
+    window.addEventListener('scroll', handleBackToTop);
+
+    backToTopBtn.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+
+    // ============================================
+    // 5. SCROLL REVEAL ANIMATIONS
+    //    Animate elements as they enter viewport
+    // ============================================
+
+    // Add 'reveal' class to elements we want to animate
+    var revealTargets = document.querySelectorAll(
+            '.destination-card, .package-card, .testimonial-card, .stat-item, .highlight-item, .about-img-wrapper, .about-badge, .contact-info, .contact-form-wrapper'
+    );
+
+    revealTargets.forEach(function (el) {
+        el.classList.add('reveal');
+    });
+
+    // Intersection Observer for reveal animations
+    var revealObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                // Stagger animation for grid children
+                var parent = entry.target.parentElement;
+                if (parent) {
+                    var siblings = parent.querySelectorAll('.reveal');
+                    siblings.forEach(function (sibling, index) {
+                        setTimeout(function () {
+                            sibling.classList.add('active');
+                        }, index * 100);
+                    });
+                }
+                entry.target.classList.add('active');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.15,
+                rootMargin: '0px 0px -50px 0px'
+    });
+
+    revealTargets.forEach(function (el) {
+        revealObserver.observe(el);
+    });
+
+
+    // ============================================
+    // 6. COUNTER ANIMATION FOR STATS
+    //    Animate numbers counting up
+    // ============================================
+
+    var statNumbers = document.querySelectorAll('.stat-number');
+    var statsAnimated = false;
+
+    function animateCounters() {
+        if (statsAnimated) return;
+
+        statNumbers.forEach(function (counter) {
+            var target = parseInt(counter.getAttribute('data-target'));
+            var duration = 2000; // 2 seconds
+            var step = target / (duration / 16); // ~60fps
+            var current = 0;
+
+            function updateCounter() {
+                current += step;
+                if (current >= target) {
+                    counter.textContent = target.toLocaleString();
+                } else {
+                    counter.textContent = Math.floor(current).toLocaleString();
+                    requestAnimationFrame(updateCounter);
+                }
+            }
+
+            updateCounter();
+        });
+
+        statsAnimated = true;
+    }
+
+    // Observe the stats section
+    var statsBar = document.querySelector('.stats-bar');
+    if (statsBar) {
+        var statsObserver = new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting) {
+                animateCounters();
+                statsObserver.unobserve(statsBar);
+            }
+        }, { threshold: 0.3 });
+
+        statsObserver.observe(statsBar);
+    }
+
+
+    // ============================================
+    // 7. CONTACT FORM VALIDATION
+    //    Validate Name, Email, and Message fields
+    // ============================================
+
+    contactForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var isValid = true;
+
+        // Get field values
+        var nameField = document.getElementById('name');
+        var emailField = document.getElementById('email');
+        var messageField = document.getElementById('message');
+
+        var nameValue = nameField.value.trim();
+        var emailValue = emailField.value.trim();
+        var messageValue = messageField.value.trim();
+
+        // Reset previous errors
+        clearAllErrors();
+
+        // Validate Name
+        if (nameValue === '') {
+            showError('name', 'Please enter your full name.');
+            isValid = false;
+        } else if (nameValue.length < 2) {
+            showError('name', 'Name must be at least 2 characters.');
+            isValid = false;
+        } else {
+            showSuccess('name');
+        }
+
+        // Validate Email
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailValue === '') {
+            showError('email', 'Please enter your email address.');
+            isValid = false;
+        } else if (!emailRegex.test(emailValue)) {
+            showError('email', 'Please enter a valid email address.');
+            isValid = false;
+        } else {
+            showSuccess('email');
+        }
+
+        // Validate Message
+        if (messageValue === '') {
+            showError('message', 'Please enter your message.');
+            isValid = false;
+        } else if (messageValue.length < 10) {
+            showError('message', 'Message must be at least 10 characters.');
+            isValid = false;
+        } else {
+            showSuccess('message');
+        }
+
+        // If valid, simulate form submission
+        if (isValid) {
+            var submitBtn = contactForm.querySelector('.btn-submit');
+            var btnText = submitBtn.querySelector('.btn-text');
+            var btnLoading = submitBtn.querySelector('.btn-loading');
+            var btnIcon = submitBtn.querySelector('.fa-paper-plane');
+            var successMsg = document.getElementById('formSuccess');
+
+            // Show loading state
+            btnText.style.display = 'none';
+            btnIcon.style.display = 'none';
+            btnLoading.style.display = 'inline-flex';
+            submitBtn.disabled = true;
+
+            // Simulate sending (1.5s delay)
+            setTimeout(function () {
+                btnLoading.style.display = 'none';
+                submitBtn.style.display = 'none';
+                successMsg.style.display = 'block';
+
+                // Reset form after delay
+                setTimeout(function () {
+                    contactForm.reset();
+                    clearAllErrors();
+                    successMsg.style.display = 'none';
+                    submitBtn.style.display = '';
+                    btnText.style.display = '';
+                    btnIcon.style.display = '';
+                    submitBtn.disabled = false;
+                }, 4000);
+            }, 1500);
+        }
+    });
+
+    // Helper: Show error for a field
+    function showError(fieldId, message) {
+        var formGroup = document.getElementById(fieldId).closest('.form-group');
+        var errorSpan = document.getElementById(fieldId + 'Error');
+        formGroup.classList.add('error');
+        formGroup.classList.remove('success');
+        errorSpan.textContent = message;
+    }
+
+    // Helper: Show success for a field
+    function showSuccess(fieldId) {
+            var formGroup = document.getElementById(fieldId).closest('.form-group');
+    formGroup.classList.remove('error');
+    formGroup.classList.add('success');
+    document.getElementById(fieldId + 'Error').textContent = '';
+    }
+
+    // Helper: Clear all errors
+    function clearAllErrors() {
+        document.querySelectorAll('.form-group').forEach(function (group) {
+            group.classList.remove('error', 'success');
+        });
+        document.querySelectorAll('.error-msg').forEach(function (span) {
+            span.textContent = '';
+        });
+    }
+
+    // Real-time validation on input
+    ['name', 'email', 'message'].forEach(function (fieldId) {
+        var field = document.getElementById(fieldId);
+        field.addEventListener('input', function () {
+            var formGroup = field.closest('.form-group');
+            if (formGroup.classList.contains('error')) {
+                // Re-validate on input if there was an error
+                var value = field.value.trim();
+                var errorSpan = document.getElementById(fieldId + 'Error');
+
+                if (value.length > 0) {
+                    formGroup.classList.remove('error');
+                    errorSpan.textContent = '';
+                }
+            }
+        });
+
+        // Focus effect for icon color
+        field.addEventListener('focus', function () {
+            field.closest('.input-wrapper').classList.add('focused');
+        });
+        field.addEventListener('blur', function () {
+            field.closest('.input-wrapper').classList.remove('focused');
+        });
+    });
+
+
+    // ============================================
+    // 8. SMOOTH SCROLL FOR ANCHOR LINKS
+    //    Enhanced smooth scroll with offset
+    // ============================================
+
+    document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+        anchor.addEventListener('click', function (e) {
+            var targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            var targetEl = document.querySelector(targetId);
+            if (targetEl) {
+                e.preventDefault();
+                var offsetTop = targetEl.offsetTop - 70; // Account for fixed navbar
+                window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+
+    // ============================================
+    // 9. PACKAGE "BOOK NOW" BUTTON HANDLER
+    //    Scrolls to contact section with package info
+    // ============================================
+
+    document.querySelectorAll('.btn-package').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var packageName = this.closest('.package-card').querySelector('.package-type').textContent;
+            var messageField = document.getElementById('message');
+            messageField.value = 'I\'m interested in the ' + packageName + ' package. Please share more details!';
+            messageField.closest('.input-wrapper').classList.add('focused');
+
+            // Scroll to contact
+            var contactSection = document.getElementById('contact');
+            var offsetTop = contactSection.offsetTop - 70;
+            window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+        });
+    });
+
+
+    // ============================================
+    // 10. PARALLAX-LIKE EFFECT ON HERO
+    //     Subtle movement on scroll
+    // ============================================
+
+    var heroContent = document.querySelector('.hero-content');
+
+    window.addEventListener('scroll', function () {
+        if (window.scrollY < window.innerHeight) {
+            var offset = window.scrollY * 0.3;
+            heroContent.style.transform = 'translateY(' + offset + 'px)';
+            heroContent.style.opacity = 1 - (window.scrollY / window.innerHeight) * 0.5;
+        }
+    });
+
